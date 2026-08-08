@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express'
+import { saveMovie, getMovies } from "./lib/movies/movieHandlers.js";
 
 const app = express()
 
@@ -18,19 +19,28 @@ app.get('/', (req, res) => {
 /* ROUTES */
 
 // save movie post
-app.post('/save-movie/:id', (req, res) => {
-    res.send("Posted id")
-})
+app.post('/save-movie/:id', async (req, res) => {
+    const user_id = req.params.id;
+    const movie_id = req.query.movie_id;
+
+    const data = await saveMovie(user_id, movie_id);
+
+    res.status(201).send(data);
+});
 
 // get movie post
 
-app.get('/saved-movies', (req, res) => {
-    res.send("/saved-movies")
-})
+app.get('/saved-movies', async (req, res) => {
+    const user_id = req.query.id;
 
+    const data = await getMovies(user_id);
+
+    res.status(200).send(data);
+});
 // save mood post
 app.post('/saved-mood/:id', (req, res) => {
     res.send("Posted id")
+
 })
 
 // get mood post
