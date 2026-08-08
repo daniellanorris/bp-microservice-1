@@ -18,5 +18,31 @@ For config files, add these under `src/lib` and add a folder for the relevant pr
 For api route definitions, add these in the `index.js` file. The index.js file uses `express` for route definitions. You can learn more about `express` here: [expressjs.com](https://expressjs.com/)
 
 
+## API documentation powered by swagger
+Can be found at localhost:{port}/api-docs.
+To get an API endpoint to appear within the swagger documentation, you can add something like the following above your route handler:
+
+```
+/**
+ * @swagger
+ * /save-movie/{id}:
+ *   post:
+ *     summary: Save a movie for a user
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: movie_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       201:
+ *         description: Movie saved successfully
+ */
+```
 
 
