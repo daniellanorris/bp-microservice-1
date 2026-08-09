@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { saveMovie, getMovies, checkIfMovieSaved } from "./lib/movies/movieHandlers.js";
+import { saveWorkout, getWorkouts } from "./lib/workouts/workoutHandlers.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
 
@@ -218,15 +219,65 @@ app.get('/saved-foods', (req, res) => {
 })
 
 // save workout post
-app.post('/save-workout/:id', (req, res) => {
-    res.send("Hello from Express!")
-})
+app.post('/save-workout/:id', async (req, res) => {
+    try {
+        const user_id = req.params.id;
+        const exercise_name = req.body.exercise_name;
+
+        if(!exercise_name) {
+            return res.status(400).json({
+                error: "exercise_name is required"
+            });
+        }
+
+        const data = await saveWorkout(user_id, exercise_name);
+
+        if (!data) {
+            return res.status(500).json({
+                error: "Unable to save workout"
+            });
+        }
+
+        return res.status(201).json(data);
+    } catch (error) {
+        console.error("Save workout route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to save workout"
+        });
+    }
+});
 
 // get workout post
 
-app.get('/saved-workouts', (req, res) => {
-    res.send("/saved-workouts")
-})
+app.get('/saved-workouts', async (req, res) => {
+    try {
+        const user_id = req.query.id;
+
+        if (!user_id) {
+            return res.status(400).json({
+                error: "User ID is required"
+            });
+        }
+
+        const data = await getWorkouts(user_id);
+
+        if (!data) {
+            return res.status(500).json({
+                error: "Unable to retrieve workouts"
+            });
+        }
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Get workouts route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to retrieve workouts"
+        });
+    }
+});
 
 // save mushroom post
 app.post('/save-mushroom/:id', (req, res) => {
