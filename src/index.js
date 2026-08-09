@@ -1,10 +1,24 @@
 import 'dotenv/config';
 import express from 'express';
-import { saveMovie, getMovies } from "./lib/movies/movieHandlers.js";
+import { saveMovie, getMovies, checkIfMovieSaved } from "./lib/movies/movieHandlers.js";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
 
+import cors from "cors";
+
+
 const app = express();
+
+// CORS
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
+}));
+
+// Parse JSON request bodies
+app.use(express.json());
+
 
 const swaggerOptions = {
     definition: {
@@ -42,7 +56,7 @@ app.get('/', (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *       - in: query
+ *       - in: body
  *         name: movie_id
  *         required: true
  *         schema:
@@ -52,18 +66,37 @@ app.get('/', (req, res) => {
  *         description: Movie saved successfully
  */
 app.post('/save-movie/:id', async (req, res) => {
-    const user_id = req.params.id;
-    const movie_id = req.query.movie_id;
+    try {
+        const user_id = req.params.id;
+        const movie_id = req.body.movie_id;
 
-    const data = await saveMovie(user_id, movie_id);
+        console.log("Saving movie:");
+        console.log("User ID:", user_id);
+        console.log("Movie ID:", movie_id);
 
-    if (!data) {
-        return res.status(500).send({
+        if (!movie_id) {
+            return res.status(400).json({
+                error: "movie_id is required"
+            });
+        }
+
+        const data = await saveMovie(user_id, movie_id);
+
+        if (!data) {
+            return res.status(500).json({
+                error: "Unable to save movie"
+            });
+        }
+
+        return res.status(201).json(data);
+
+    } catch (error) {
+        console.error("Save movie route error:", error);
+
+        return res.status(500).json({
             error: "Unable to save movie"
         });
     }
-
-    res.status(201).send(data);
 });
 
 /**
@@ -82,24 +115,85 @@ app.post('/save-movie/:id', async (req, res) => {
  *         description: Saved movies
  */
 app.get('/saved-movies', async (req, res) => {
-    const user_id = req.query.id;
+    try {
+        const user_id = req.query.id;
 
-    const data = await getMovies(user_id);
+        if (!user_id) {
+            return res.status(400).json({
+                error: "User ID is required"
+            });
+        }
 
-    if (!data) {
-        return res.status(500).send({
+
+        const data = await getMovies(user_id);
+        console.log(data)
+        if (!data) {
+            return res.status(500).json({
+                error: "Unable to retrieve movies"
+            });
+        }
+
+        console.log(data)
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Get movies route error:", error);
+
+        return res.status(500).json({
             error: "Unable to retrieve movies"
         });
     }
-
-    res.status(200).send(data);
 });
 
-// other routes...
 
-app.listen(process.env.LOCALHOST, () => {
-    console.log('Listening on port', process.env.LOCALHOST);
+/**
+ * @swagger
+ * /saved-movies:
+ *   get:
+ *     summary: Get saved movies for a user
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Saved movies
+ */
+
+app.post('/is-saved', async (req, res) => {
+    try {
+        const user_id = req.body.user_id;
+        const movie_id = req.body.movie_id;
+
+        if (!user_id) {
+            return res.status(400).json({
+                error: "User ID is required"
+            });
+        }
+
+        if (!movie_id) {
+            return res.status(400).json({
+                error: "Movie ID is required"
+            });
+        }
+
+        const data = await checkIfMovieSaved(user_id, movie_id);
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Check saved movies route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to retrieve saved movies"
+        });
+    }
 });
+
+
+
 // save mood post
 app.post('/saved-mood/:id', (req, res) => {
     res.send("Posted id")
@@ -149,3 +243,6 @@ app.get('/saved-mushrooms', (req, res) => {
 
 
 
+app.listen(process.env.LOCALHOST, () => {
+    console.log('Listening on port', process.env.LOCALHOST);
+});
