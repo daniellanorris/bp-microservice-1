@@ -10,19 +10,31 @@ export async function saveMovie(user_id, movie_id) {
             })
             .select();
 
+        console.log("Supabase save response:", { data, error });
+
         if (error) {
             console.error("DB Error:", error.message);
-            return null;
+
+            return {
+                success: false,
+                error: error.message
+            };
         }
 
-        return data;
-    }
-    catch (error) {
+        return {
+            success: true,
+            data: data
+        };
+
+    } catch (error) {
         console.error("DB Error:", error.message);
-        return null;
+
+        return {
+            success: false,
+            error: error.message
+        };
     }
 }
-
 export async function getMovies(user_id) {
     try {
         const { data, error } = await supabase
