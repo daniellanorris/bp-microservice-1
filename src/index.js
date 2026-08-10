@@ -196,16 +196,154 @@ app.post('/is-saved', async (req, res) => {
 
 
 // save mood post
-app.post('/saved-mood/:id', (req, res) => {
-    res.send("Posted id")
+app.post('/save-mood/:id', async (req, res) => {
+    try {
+        const user_id = req.params.id;
+        const mood_id = req.body.mood_id;
+        const mood = req.body.mood;
+        const note = req.body.note;
 
-})
+        console.log("Saving mood:");
+        console.log("User ID:", user_id);
+        console.log("Mood ID:", mood_id);
+        console.log("Mood:", mood);
+        console.log("Note:", note);
+
+        if (!mood_id) {
+            return res.status(400).json({
+                error: "mood_id is required"
+            });
+        }
+
+        if (!mood) {
+            return res.status(400).json({
+                error: "mood is required"
+            });
+        }
+
+        const data = await saveMood(
+            user_id,
+            mood_id,
+            mood,
+            note
+        );
+
+        if (!data.success) {
+            return res.status(400).json(data);
+        }
+
+        return res.status(201).json(data);
+
+    } catch (error) {
+        console.error("Save mood route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to save mood"
+        });
+    }
+});
+
+
 
 // get mood post
+app.get('/saved-moods', async (req, res) => {
+    try {
+        const user_id = req.query.id;
 
-app.get('/saved-moods', (req, res) => {
-    res.send("/saved-moods")
-})
+        if (!user_id) {
+            return res.status(400).json({
+                error: "User ID is required"
+            });
+        }
+
+        const data = await getMoods(user_id);
+
+        if (data === null) {
+            return res.status(500).json({
+                error: "Unable to retrieve saved moods"
+            });
+        }
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Get moods route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to retrieve saved moods"
+        });
+    }
+});
+
+app.delete('/remove-mood/:id', async (req, res) => {
+    try {
+        const user_id = req.params.id;
+        const mood_id = req.body.mood_id;
+
+        console.log("Removing mood:");
+        console.log("User ID:", user_id);
+        console.log("Mood ID:", mood_id);
+
+        if (!mood_id) {
+            return res.status(400).json({
+                error: "mood_id is required"
+            });
+        }
+
+        const data = await removeMood(
+            user_id,
+            mood_id
+        );
+
+        if (!data.success) {
+            return res.status(400).json(data);
+        }
+
+        return res.status(200).json(data);
+
+    } catch (error) {
+        console.error("Remove mood route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to remove mood"
+        });
+    }
+});
+
+app.post('/is-mood-saved', async (req, res) => {
+    try {
+        const user_id = req.body.user_id;
+        const mood_id = req.body.mood_id;
+
+        if (!user_id) {
+            return res.status(400).json({
+                error: "User ID is required"
+            });
+        }
+
+        if (!mood_id) {
+            return res.status(400).json({
+                error: "Mood ID is required"
+            });
+        }
+
+        const data = await checkIfMoodSaved(
+            user_id,
+            mood_id
+        );
+
+        return res.status(200).json({
+            saved: data
+        });
+
+    } catch (error) {
+        console.error("Check saved mood route error:", error);
+
+        return res.status(500).json({
+            error: "Unable to check saved mood"
+        });
+    }
+});
 
 // save food post
 app.post('/save-food/:id', (req, res) => {
